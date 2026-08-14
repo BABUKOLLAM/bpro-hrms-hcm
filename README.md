@@ -34,6 +34,15 @@ Payroll runs on the [OCA `payroll`](https://github.com/OCA/payroll) engine
 (vendored here under `addons/payroll*`, LGPL-3), extended with the India
 statutory rules above.
 
+## Documentation
+
+- [**Setup & Onboarding Guide**](docs/SETUP_GUIDE.md) — deploying this
+  for a new client: installation, security hardening, statutory
+  configuration (PF/ESI/PT/LWF/TDS), go-live checklist.
+- [**User Manual**](docs/USER_MANUAL.md) — day-to-day usage for HR
+  staff, department heads, and employees, covering every module from
+  recruitment through exit.
+
 ## Running it locally
 
 Requires Docker.
