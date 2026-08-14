@@ -122,6 +122,49 @@ Caddy needs ports 80 and 443 reachable from the internet (80 is used
 for the one-time ACME certificate challenge, then everything redirects
 to 443). No manual certificate renewal is needed — Caddy handles it.
 
+### Co-hosting on a server that already runs a Caddy instance
+
+Only one process can bind ports 80/443 on a given server, so if this
+stack is going on a box that already fronts another site with its own
+Caddy (bpro's own production VPS does exactly this, alongside a
+client's ME Polymers ERP), **do not start this stack's own `caddy`
+service** — instead:
+
+1. Bring up only `db` and `odoo`, joined to the other project's
+   existing Docker network under a distinct alias, using the
+   `docker-compose.shared-caddy.yml` overlay in this repo (edit the
+   external network name and alias inside it to match the other
+   project first):
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+     -f docker-compose.shared-caddy.yml up -d db odoo
+   ```
+
+2. Run the one-time database install with `run --rm --no-deps`, **not**
+   `exec` — `exec` runs inside the already-listening container and
+   fails with `OSError: Address already in use`; `run` starts a
+   separate, temporary container instead:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+     -f docker-compose.shared-caddy.yml run --rm --no-deps odoo \
+     odoo -c /etc/odoo/odoo.prod.conf -d bpro_prod -i <modules> \
+     --without-demo=all --stop-after-init
+   ```
+
+3. Add a new site block to the *other* project's Caddyfile pointing at
+   this stack's alias (e.g. `reverse_proxy hrms-odoo:8069`), separate
+   from its existing site block — never add this domain to an existing
+   block for a different site, or both domains will serve the same
+   backend. Validate before reloading, and reload (not restart) to
+   avoid dropping the other site's live connections:
+
+   ```bash
+   docker exec <other-caddy-container> caddy validate --config /etc/caddy/Caddyfile
+   docker exec <other-caddy-container> caddy reload --config /etc/caddy/Caddyfile
+   ```
+
 ### Outbound email (SMTP)
 
 Payslip emails, offer letters, and reminder notifications all send
