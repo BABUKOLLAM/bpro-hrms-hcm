@@ -9,7 +9,7 @@ compliance built in, not bolted on.
 
 Developed by **Dr. Babu** ([www.drbabu.in](https://www.drbabu.in)) &
 **bpro Technologies** ([www.bpropms.com](https://www.bpropms.com)).
-Contact: [care@bpropms.com](mailto:care@bpropms.com).
+Contact: [care@bprohrms.com](mailto:care@bprohrms.com).
 
 ## What's in the suite
 
