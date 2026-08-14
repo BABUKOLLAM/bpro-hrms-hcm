@@ -1,5 +1,8 @@
 # bpro HCM | HRMS
 
+[![Test suite](https://github.com/BABUKOLLAM/bpro-hrms-hcm/actions/workflows/tests.yml/badge.svg)](https://github.com/BABUKOLLAM/bpro-hrms-hcm/actions/workflows/tests.yml)
+[![License: LGPL-3.0](https://img.shields.io/badge/License-LGPL--3.0-blue.svg)](LICENSE)
+
 A complete, India-ready Human Capital Management suite built on Odoo 18
 Community — hire-to-retire in one platform, with statutory payroll
 compliance built in, not bolted on.
@@ -37,11 +40,20 @@ statutory rules above.
 ## Documentation
 
 - [**Setup & Onboarding Guide**](docs/SETUP_GUIDE.md) — deploying this
-  for a new client: installation, security hardening, statutory
-  configuration (PF/ESI/PT/LWF/TDS), go-live checklist.
+  for a new client: installation, TLS/production deployment, backups,
+  security hardening, statutory configuration (PF/ESI/PT/LWF/TDS),
+  go-live checklist.
 - [**User Manual**](docs/USER_MANUAL.md) — day-to-day usage for HR
   staff, department heads, and employees, covering every module from
   recruitment through exit.
+- [**Known Limitations**](docs/KNOWN_LIMITATIONS.md) — what's
+  deliberately not built yet, for the client's payroll/compliance team
+  to knowingly accept before go-live.
+- [**UAT Checklist**](docs/UAT_CHECKLIST.md) — the acceptance-testing
+  script to run on staging before the first real payroll.
+- [**Data Privacy Notes**](docs/DATA_PRIVACY.md) — what personal data
+  this suite stores and what compliance review it needs (India DPDP
+  Act 2023).
 
 ## Running it locally
 
@@ -57,21 +69,51 @@ docker compose restart odoo
 
 Then visit `http://localhost:8069`.
 
-**Before any real use**: change `admin_passwd` in `config/odoo.conf` and the
-Postgres credentials in `docker-compose.yml` — both ship with development
-defaults.
+**Before any real use**: this is a development setup — plain HTTP, dev
+credentials, no backups. See
+[`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) for TLS, production
+config, and backups before putting real company data in.
+
+## Production deployment
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Layers in a Caddy reverse proxy (automatic HTTPS) and a
+production-sized Odoo config. Full walkthrough in
+[`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) §4.5.
+
+## Backups
+
+```bash
+./scripts/backup_db.sh <db_name>        # back up
+./scripts/restore_db.sh <backup_dir> <target_db_name>  # restore
+```
+
+Nothing runs automatically — schedule `backup_db.sh` via cron. See
+[`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) §4.6.
 
 ## Test suites
 
-Every module carries its own `tests/` (Odoo `TransactionCase`). Run the
-full suite against a throwaway database:
+Every module except `bpro_hrms_portal` carries its own `tests/` (Odoo
+`TransactionCase`) — 164 tests in total. This runs automatically on
+every push via [GitHub Actions](.github/workflows/tests.yml); to run
+it yourself against a throwaway database:
 
 ```bash
-docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d bpro_hcm_test \
-  --test-enable -i bpro_ess,bpro_hrms_portal,bpro_statutory_filing,bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts \
+docker compose run --rm --no-deps odoo odoo -c /etc/odoo/odoo.conf -d hcm_test \
+  --test-enable \
+  --test-tags /bpro_approval,/bpro_attendance,/bpro_base,/bpro_ess,/bpro_exit,/bpro_hcm_dashboard,/bpro_hr,/bpro_hr_letters,/bpro_leave,/bpro_lms,/bpro_overtime,/bpro_payroll,/bpro_pms,/bpro_probation,/bpro_recruitment,/bpro_shifts,/bpro_statutory_filing \
+  -i bpro_approval,bpro_attendance,bpro_base,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing \
   --stop-after-init --without-demo=all
 ```
 
+(`--test-tags` scopes to just this suite's own tests — a bare
+`--test-enable` also runs every native Odoo module's own test suite,
+which is a much longer wait for no extra signal.)
+
 ## License
 
-LGPL-3, matching the OCA payroll modules this suite builds on.
+[LGPL-3.0](LICENSE), matching the OCA payroll modules this suite
+builds on.

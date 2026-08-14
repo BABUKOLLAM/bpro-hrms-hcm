@@ -6,6 +6,14 @@ on the client's own side). If you're an end user looking for how to
 *use* the system day to day, see [`USER_MANUAL.md`](USER_MANUAL.md)
 instead.
 
+Three companion documents worth reading alongside this one:
+[`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) (what's deliberately
+not built yet — review with the client before go-live),
+[`UAT_CHECKLIST.md`](UAT_CHECKLIST.md) (the acceptance-testing script
+to run before the first real payroll), and
+[`DATA_PRIVACY.md`](DATA_PRIVACY.md) (what personal data this stores
+and what compliance review it needs).
+
 ---
 
 ## 1. What you're deploying
@@ -79,6 +87,78 @@ before any real company data goes in:
 Also set `list_db = False` in `config/odoo.conf` once the client
 database exists, so the database-selection screen doesn't advertise
 every database on the server to anyone who visits the login page.
+
+---
+
+## 4.5 Production deployment — TLS and a production-sized config
+
+The default `docker-compose.yml` is a development setup: it exposes
+Odoo's port 8069 directly and runs unencrypted HTTP. **Do not put this
+on the internet as-is.** For a real deployment:
+
+1. Point the client's domain's DNS A record at the server.
+2. Edit `deploy/Caddyfile` — replace the placeholder domain
+   (`hcm.example.com`) with the real one.
+3. Use `config/odoo.prod.conf` instead of the dev config — it has
+   production-sized worker/memory settings, a hidden database-manager
+   screen, and commented-out SMTP settings (see the next section).
+   Fill in its `admin_passwd`, `db_name`, and `dbfilter` first.
+4. Bring the stack up with both compose files together, which layers
+   in a Caddy reverse proxy (automatic HTTPS via Let's Encrypt) and
+   stops publishing Odoo's ports directly — only Caddy is
+   internet-facing:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+   ```
+
+Caddy needs ports 80 and 443 reachable from the internet (80 is used
+for the one-time ACME certificate challenge, then everything redirects
+to 443). No manual certificate renewal is needed — Caddy handles it.
+
+### Outbound email (SMTP)
+
+Payslip emails, offer letters, and reminder notifications all send
+real mail. Configure a relay either of two ways (both work; UI config
+wins if both are set):
+
+- **In `config/odoo.prod.conf`**: uncomment and fill in the
+  `smtp_server` / `smtp_port` / `smtp_user` / `smtp_password` /
+  `smtp_ssl` lines with the client's actual mail provider details.
+- **In the running app**: Settings → Technical → Email → Outgoing Mail
+  Servers.
+
+Send a test email (e.g. trigger an offer-letter send) after
+configuring, before relying on it for anything real.
+
+---
+
+## 4.6 Backups
+
+**No backup runs automatically — you must schedule one.**
+`scripts/backup_db.sh` dumps both the Postgres database and the Odoo
+filestore (attachments, generated PDFs — a database-only backup is
+incomplete) to a timestamped directory under `backups/`.
+
+```bash
+# One-off backup:
+./scripts/backup_db.sh <db_name>
+
+# Scheduled via cron - e.g. daily at 02:00:
+0 2 * * * cd /path/to/bpro-hrms-hcm && ./scripts/backup_db.sh <db_name> >> /var/log/bpro-backup.log 2>&1
+```
+
+Copy the `backups/` directory (or wherever you point it) to storage
+that isn't the same disk as the live server — a backup that lives next
+to what it's backing up doesn't survive a disk failure.
+
+**Test the restore path before you need it for real:**
+
+```bash
+./scripts/restore_db.sh backups/<db_name>_<timestamp> <scratch_db_name>
+```
+
+A backup nobody has ever restored is a hope, not a backup.
 
 ---
 
@@ -181,7 +261,9 @@ Before running the first payroll:
 
 - [ ] `admin_passwd` and Postgres credentials changed from defaults
 - [ ] `list_db = False` set once the real database exists
-- [ ] Reverse proxy + TLS in front of Odoo (production only)
+- [ ] Reverse proxy + TLS in front of Odoo (§4.5 — `docker-compose.prod.yml` + `deploy/Caddyfile`, production only)
+- [ ] Outbound email (SMTP) configured and test-sent
+- [ ] Automated backups scheduled via cron (§4.6 — `scripts/backup_db.sh`) and a restore rehearsed at least once
 - [ ] Company legal details, PAN, TAN, logo set
 - [ ] PF/ESI rates confirmed current
 - [ ] PT/LWF config exists for every state the client operates in
@@ -193,7 +275,10 @@ Before running the first payroll:
 - [ ] Shift calendars built for every shift the client actually runs (including night shifts, if any)
 - [ ] Attendance capture method confirmed (CSV import is the default; live device integration is separate custom work if needed)
 - [ ] Every employee has PAN, UAN, ESI number (if covered), bank account, Badge ID
-- [ ] A test payroll run for one employee, reviewed by the client's own payroll person, before running it for everyone
+- [ ] [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) reviewed and knowingly accepted by the client's payroll/compliance team
+- [ ] [`DATA_PRIVACY.md`](DATA_PRIVACY.md) reviewed by the client's compliance/legal function
+- [ ] [`UAT_CHECKLIST.md`](UAT_CHECKLIST.md) fully run and signed off on a staging copy
+- [ ] First real payroll run in parallel with the client's existing system for at least one cycle before full cutover
 
 ---
 

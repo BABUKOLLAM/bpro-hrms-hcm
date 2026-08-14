@@ -1,0 +1,61 @@
+name: Test suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  odoo-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Start Postgres
+        run: docker compose up -d db
+
+      - name: Wait for Postgres to be healthy
+        run: |
+          for i in $(seq 1 30); do
+            db_health=$(docker compose ps db --format '{{.Health}}')
+            if [ "$db_health" = "healthy" ]; then
+              echo "Postgres is healthy"
+              exit 0
+            fi
+            echo "Waiting for Postgres ($i/30)..."
+            sleep 2
+          done
+          echo "::error::Postgres never became healthy"
+          docker compose logs db
+          exit 1
+
+      - name: Install every module and run this repo's own test suite
+        env:
+          TEST_TAGS: /bpro_approval,/bpro_attendance,/bpro_base,/bpro_ess,/bpro_exit,/bpro_hcm_dashboard,/bpro_hr,/bpro_hr_letters,/bpro_leave,/bpro_lms,/bpro_overtime,/bpro_payroll,/bpro_pms,/bpro_probation,/bpro_recruitment,/bpro_shifts,/bpro_statutory_filing
+          INSTALL_MODULES: bpro_approval,bpro_attendance,bpro_base,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing
+        run: |
+          docker compose run --rm --no-deps odoo odoo -c /etc/odoo/odoo.conf -d ci_test --test-enable --test-tags "$TEST_TAGS" -i "$INSTALL_MODULES" --without-demo=all --stop-after-init 2>&1 | tee /tmp/odoo-test.log
+
+      - name: Verify the test suite actually passed
+        run: |
+          summary=$(grep -E "odoo\.tests\.result:" /tmp/odoo-test.log | tail -1)
+          echo "$summary"
+          if [ -z "$summary" ]; then
+            echo "::error::No test-result summary line found in the Odoo log — treating as a failure."
+            exit 1
+          fi
+          if ! echo "$summary" | grep -q "0 failed, 0 error(s)"; then
+            echo "::error::Test suite reported failures or errors — see the log above."
+            exit 1
+          fi
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans

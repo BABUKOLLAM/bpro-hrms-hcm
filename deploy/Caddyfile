@@ -1,0 +1,37 @@
+# Reverse proxy + automatic HTTPS for the bpro HCM/HRMS Odoo instance.
+# Caddy obtains and renews a Let's Encrypt certificate automatically -
+# no certbot, no manual renewal cron. Replace the placeholder domain
+# below with the client's real domain before deploying.
+#
+# Requires the domain's DNS A/AAAA record to already point at this
+# server, and ports 80+443 reachable from the internet (80 is needed
+# for the ACME HTTP challenge even though everything redirects to 443
+# afterwards).
+
+hcm.example.com {
+	# Long-polling (Odoo's live chatter/notification bus) needs a
+	# longer read timeout than Caddy's default, or it gets cut off
+	# and silently reconnects more often than it should.
+	reverse_proxy odoo:8069 {
+		header_up X-Forwarded-Proto {scheme}
+		transport http {
+			read_timeout 610s
+		}
+	}
+
+	# The bus/longpolling endpoint specifically talks to Odoo's
+	# separate longpolling port (8072) - route it there, everything
+	# else goes to the main app port above.
+	handle /websocket/* {
+		reverse_proxy odoo:8072
+	}
+	handle /longpolling/* {
+		reverse_proxy odoo:8072
+	}
+
+	encode gzip
+
+	log {
+		output file /var/log/caddy/hcm-access.log
+	}
+}
