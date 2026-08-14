@@ -56,7 +56,8 @@ install the full module set into a named database:
 ```bash
 docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d <client_db_name> \
   -i bpro_hrms_portal,bpro_hcm_dashboard,bpro_leave,bpro_exit,bpro_ess,bpro_probation,\
-bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_statutory_filing,bpro_lms,bpro_pms \
+bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_statutory_filing,bpro_lms,bpro_pms,\
+bpro_employment_type \
   --without-demo=all --stop-after-init
 docker compose restart odoo
 ```
@@ -65,7 +66,12 @@ That single `-i` list pulls in every other module transitively
 (`bpro_payroll`, `bpro_recruitment`, `bpro_attendance`, `bpro_hr`,
 `bpro_base`, the vendored payroll engine, and native Odoo HR modules)
 through their own dependency chains — you don't need to list those
-separately.
+separately. `bpro_employment_type` is listed explicitly because nothing
+else in this set depends on it, so it wouldn't be pulled in on its own.
+
+Do **not** add `bpro_demo_data` to a production install command — see
+the [README](../README.md#whats-in-the-suite) for what it does and why
+it's evaluation-only.
 
 Replace `<client_db_name>` with something identifiable, e.g.
 `acme_manufacturing_prod`. Visit `http://localhost:8069`, select that
@@ -353,10 +359,17 @@ correctly on this deployment's Odoo/Postgres versions:
 
 ```bash
 docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d verify_test \
-  --test-enable -i bpro_ess,bpro_hrms_portal,bpro_hcm_dashboard,bpro_statutory_filing,\
-bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts \
+  --test-enable \
+  --test-tags /bpro_approval,/bpro_attendance,/bpro_base,/bpro_employment_type,/bpro_ess,/bpro_exit,/bpro_hcm_dashboard,/bpro_hr,/bpro_hr_letters,/bpro_leave,/bpro_lms,/bpro_overtime,/bpro_payroll,/bpro_pms,/bpro_probation,/bpro_recruitment,/bpro_shifts,/bpro_statutory_filing \
+  -i bpro_ess,bpro_hrms_portal,bpro_hcm_dashboard,bpro_statutory_filing,\
+bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_employment_type \
   --stop-after-init --without-demo=all
 ```
+
+The `--test-tags` list scopes the run to this repo's own tests only —
+without it, `--test-enable` also runs every native Odoo module's test
+suite it transitively installs (accounting, sales, etc.), which adds
+upwards of ten minutes for zero extra signal on this deployment.
 
 Look for `0 failed, 0 error(s)` in the output, then drop the throwaway
 database.

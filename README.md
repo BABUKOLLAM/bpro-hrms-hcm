@@ -34,6 +34,7 @@ Contact: [care@bpropms.com](mailto:care@bpropms.com).
 | `bpro_hcm_dashboard` | HCM-only executive dashboard — payroll, recruitment, attendance, exit and leave-liability KPIs at a glance |
 | `bpro_employment_type` | Classifies each contract as Permanent, Fixed Term Contract, Trainee/Apprentice, Daily Wage, or Contract Labour — with real payroll differences, not just a label (Daily Wage computes from actual attendance days, not CTC) |
 | `bpro_approval` | Shared threshold-approval policy primitive used by several modules above |
+| `bpro_demo_data` | *Evaluation only, never install in production* — populates a small sample company (one employee hired through the real recruitment workflow, four more spanning every employment category, a computed payslip, attendance, a leave allocation) so a fresh install isn't empty. Only runs when demo data is enabled; every install command in this README/the setup guide/CI passes `--without-demo=all`, which skips it automatically |
 
 Payroll runs on the [OCA `payroll`](https://github.com/OCA/payroll) engine
 (vendored here under `addons/payroll*`, LGPL-3), extended with the India
@@ -70,6 +71,14 @@ docker compose restart odoo
 ```
 
 Then visit `http://localhost:8069`.
+
+**Just want to look around?** Install `bpro_demo_data` on top with demo
+data left *on* (i.e. omit `--without-demo=all`) to get a small sample
+company pre-populated — one employee hired through the real recruitment
+flow, four more across every employment category, a computed payslip,
+attendance, and a leave allocation. Never install it this way in
+production; it's excluded from every command in this README, the setup
+guide, and CI for that reason.
 
 **Before any real use**: this is a development setup — plain HTTP, dev
 credentials, no backups. See

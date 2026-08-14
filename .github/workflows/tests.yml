@@ -34,8 +34,8 @@ jobs:
 
       - name: Install every module and run this repo's own test suite
         env:
-          TEST_TAGS: /bpro_approval,/bpro_attendance,/bpro_base,/bpro_employment_type,/bpro_ess,/bpro_exit,/bpro_hcm_dashboard,/bpro_hr,/bpro_hr_letters,/bpro_leave,/bpro_lms,/bpro_overtime,/bpro_payroll,/bpro_pms,/bpro_probation,/bpro_recruitment,/bpro_shifts,/bpro_statutory_filing
-          INSTALL_MODULES: bpro_approval,bpro_attendance,bpro_base,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing
+          TEST_TAGS: /bpro_approval,/bpro_attendance,/bpro_base,/bpro_demo_data,/bpro_employment_type,/bpro_ess,/bpro_exit,/bpro_hcm_dashboard,/bpro_hr,/bpro_hr_letters,/bpro_leave,/bpro_lms,/bpro_overtime,/bpro_payroll,/bpro_pms,/bpro_probation,/bpro_recruitment,/bpro_shifts,/bpro_statutory_filing
+          INSTALL_MODULES: bpro_approval,bpro_attendance,bpro_base,bpro_demo_data,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing
         run: |
           docker compose run --rm --no-deps odoo odoo -c /etc/odoo/odoo.conf -d ci_test --test-enable --test-tags "$TEST_TAGS" -i "$INSTALL_MODULES" --without-demo=all --stop-after-init 2>&1 | tee /tmp/odoo-test.log
 
