@@ -1,0 +1,21 @@
+# Append this to /etc/fail2ban/jail.local on the host (or drop as
+# /etc/fail2ban/jail.d/odoo-auth.local), alongside filter.d/odoo-auth.conf
+# (copied from deploy/fail2ban/odoo-auth.conf in this repo).
+#
+# Bans an IP for 1 hour after 5 failed login attempts within 10
+# minutes. Adjust maxretry/findtime/bantime to the client's actual
+# tolerance - these are reasonable defaults, not a mandated policy.
+
+[odoo-auth]
+enabled  = true
+filter   = odoo-auth
+logpath  = /path/to/bpro-hrms-hcm/logs/odoo/odoo.log
+maxretry = 5
+findtime = 10m
+bantime  = 1h
+# Odoo runs behind Caddy in this deployment - fail2ban needs to ban at
+# the actual firewall (iptables/nftables/ufw), not inside a container,
+# since neither Odoo nor Caddy sees or can block the raw connection
+# itself. The default fail2ban action (iptables-multiport or your
+# distro's default) handles this - no special action needed here
+# unless you have a non-standard firewall setup.

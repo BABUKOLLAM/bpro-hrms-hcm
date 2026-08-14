@@ -11,6 +11,12 @@ services:
       - odoo-data:/var/lib/odoo
       - ./config:/etc/odoo
       - ./addons:/mnt/extra-addons
+      # A distinct bind-mounted (not named-volume) log path, so it has
+      # a predictable host filesystem location - fail2ban (running on
+      # the host, not in a container, since it needs to reach the
+      # host's firewall) reads login failures from here. See
+      # deploy/fail2ban/ and docs/SETUP_GUIDE.md.
+      - ./logs/odoo:/var/log/odoo
 
   caddy:
     image: caddy:2-alpine

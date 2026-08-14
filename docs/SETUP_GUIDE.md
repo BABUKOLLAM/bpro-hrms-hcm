@@ -162,6 +162,56 @@ A backup nobody has ever restored is a hope, not a backup.
 
 ---
 
+## 4.7 Login brute-force protection
+
+Odoo Community's own login throttling is minimal. Caddy's stock image
+has no built-in rate limiter (the plugin that adds one needs a custom
+build — not worth the extra image-maintenance burden here), so this
+uses the standard, well-understood tool instead: **fail2ban on the
+host**, watching Odoo's own login-failure log and banning repeat
+offenders at the firewall.
+
+1. Install fail2ban on the host (`apt install fail2ban` on
+   Debian/Ubuntu, or your distro's equivalent).
+2. Copy the filter: `deploy/fail2ban/odoo-auth.conf` →
+   `/etc/fail2ban/filter.d/odoo-auth.conf`.
+3. Copy the jail: `deploy/fail2ban/jail.local` →
+   `/etc/fail2ban/jail.d/odoo-auth.local`, and fix the `logpath` to
+   point at this repo's actual location on the host (it reads
+   `logs/odoo/odoo.log`, the bind-mounted log path from
+   `docker-compose.prod.yml`).
+4. `systemctl restart fail2ban`, then `fail2ban-client status
+   odoo-auth` to confirm the jail is active.
+
+Default policy: 5 failed logins in 10 minutes bans the IP for 1 hour —
+adjust `maxretry`/`findtime`/`bantime` in the jail file to the client's
+actual tolerance.
+
+---
+
+## 4.8 Uptime monitoring
+
+Nothing in this stack tells you if the site goes down — that needs an
+**external** check (external deliberately: something checking from
+outside the server can tell the difference between "the server is
+down" and "the server can't reach itself," which a monitor running on
+the same box cannot). Not a coding task — pick one:
+
+- **[healthchecks.io](https://healthchecks.io)** or
+  **[UptimeRobot](https://uptimerobot.com)** (both have workable free
+  tiers) — point either at `https://<the client's domain>/web/login`
+  on a 5-minute interval, and set it to alert (email/SMS/Slack) on
+  failure or on an unexpected HTTP status.
+- Odoo doesn't ship a dedicated `/health` endpoint in Community, but
+  `/web/login` returning HTTP 200 is a solid enough proxy — it means
+  Odoo, Postgres, and Caddy's TLS are all working, not just that a
+  port is open.
+- If the client already runs infrastructure monitoring (Datadog, a
+  Grafana/Prometheus stack, etc.), add this instance as one more
+  target there instead of a separate standalone tool.
+
+---
+
 ## 5. Company setup checklist
 
 Work through this in order. Every item below is a *company policy or
@@ -264,6 +314,8 @@ Before running the first payroll:
 - [ ] Reverse proxy + TLS in front of Odoo (§4.5 — `docker-compose.prod.yml` + `deploy/Caddyfile`, production only)
 - [ ] Outbound email (SMTP) configured and test-sent
 - [ ] Automated backups scheduled via cron (§4.6 — `scripts/backup_db.sh`) and a restore rehearsed at least once
+- [ ] fail2ban installed and the `odoo-auth` jail active (§4.7)
+- [ ] External uptime monitoring pointed at the live domain (§4.8)
 - [ ] Company legal details, PAN, TAN, logo set
 - [ ] PF/ESI rates confirmed current
 - [ ] PT/LWF config exists for every state the client operates in
