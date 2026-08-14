@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo noupdate="1">
+    <!--
+        Second cross-module override of rule_basic (bpro_leave's LOP
+        proration was the first). XML record overrides REPLACE a field's
+        value, they don't merge/chain automatically, so this re-declares
+        the full formula: the LOP_FACTOR-multiplied CTC path for every
+        category except Daily Wage is copied forward unchanged from
+        bpro_leave, with the Daily Wage branch added alongside it.
+
+        Daily Wage deliberately does NOT also multiply by LOP_FACTOR -
+        daily_wage_days_worked already only counts days the employee
+        actually attended, so LOP on top would double-penalize the same
+        absence. HRA needs no equivalent override: it's already just a
+        % of categories.BASIC, so it inherits the right base figure
+        from whichever branch fired above it, unchanged.
+    -->
+
+    <record id="bpro_payroll.rule_basic" model="hr.salary.rule">
+        <field name="amount_python_compute">if contract.employment_category == 'daily_wage':
+    result = contract.daily_wage_rate * payslip.bpro_daily_wage_days_worked(employee)
+else:
+    result = contract.ctc_annual / 12.0 * (contract.basic_percent / 100.0) * LOP_FACTOR</field>
+    </record>
+</odoo>

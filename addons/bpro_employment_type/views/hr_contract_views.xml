@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="hr_contract_view_form_bpro_employment_type" model="ir.ui.view">
+        <field name="name">hr.contract.form.bpro.employment.type</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="bpro_payroll.hr_contract_view_form_bpro_payroll"/>
+        <field name="arch" type="xml">
+            <field name="ctc_annual" position="before">
+                <field name="employment_category"/>
+                <field name="daily_wage_rate" invisible="employment_category != 'daily_wage'"
+                       required="employment_category == 'daily_wage'"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

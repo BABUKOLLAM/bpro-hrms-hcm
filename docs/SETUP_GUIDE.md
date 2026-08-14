@@ -227,6 +227,15 @@ situation.
   (`bpro_hrms_portal`), see §8 below.
 
 ### 5.2 Statutory payroll configuration (`bpro_payroll`)
+
+Also decide each employee's **Employment Category** on their contract
+(`bpro_employment_type`) before running their first payslip — it's not
+just a label: Trainee/Apprentice and Contract Labour change the PF/ESI
+defaults, Fixed Term Contract requires a Contract End Date, and Daily
+Wage switches Basic to a rate-per-attendance-day computation entirely
+instead of the CTC/12 figure everything else uses. See
+`docs/USER_MANUAL.md` §7 for the per-category detail.
+
 Under **Settings → Companies → [company] → Payroll** tabs:
 
 - **PF**: wage ceiling, employee/employer/EPS/EDLI/admin rates. Seeded

@@ -188,7 +188,17 @@ which of these two applies:
 
 1. **Contracts**: each employee's contract carries their Annual CTC,
    Basic %, HRA %, PF/ESI applicability, PT state, LWF state, and TDS
-   regime choice (New or Old — the employee's own election).
+   regime choice (New or Old — the employee's own election). Also set
+   **Employment Category** — Permanent (default), Fixed Term Contract
+   (requires a Contract End Date — that's the legal definition of one),
+   Trainee/Apprentice (PF/ESI default off, per the Apprentices Act —
+   override if this is an informal "trainee" rather than a registered
+   apprenticeship), Daily Wage (set a **Daily Wage Rate** instead of a
+   CTC — pay is computed from actual attendance days worked, not a
+   monthly figure), or Contract Labour (PF/ESI default off — see
+   `docs/KNOWN_LIMITATIONS.md`, these workers are usually better
+   tracked outside payroll entirely, paid via the contractor's own
+   invoice).
 2. **Run payslips**: generate payslips for the period (individually or
    in a batch via a Payslip Run). Each payslip automatically computes,
    in order: Basic, HRA, flexible benefits, PF, ESI, Professional Tax,
