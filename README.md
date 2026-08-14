@@ -27,6 +27,7 @@ Developed by **Dr. Babu** ([www.drbabu.in](https://www.drbabu.in)) &
 | `bpro_lms` | Learning management with auto-enrolled induction |
 | `bpro_pms` | Goals, review cycles, appraisals |
 | `bpro_hrms_portal` | Branded public landing page and login experience |
+| `bpro_hcm_dashboard` | HCM-only executive dashboard — payroll, recruitment, attendance, exit and leave-liability KPIs at a glance |
 | `bpro_approval` | Shared threshold-approval policy primitive used by several modules above |
 
 Payroll runs on the [OCA `payroll`](https://github.com/OCA/payroll) engine
@@ -40,7 +41,7 @@ Requires Docker.
 ```bash
 docker compose up -d
 docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d bpro_hcm \
-  -i bpro_hrms_portal,bpro_leave,bpro_exit,bpro_ess,bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_statutory_filing,bpro_lms,bpro_pms \
+  -i bpro_hrms_portal,bpro_hcm_dashboard,bpro_leave,bpro_exit,bpro_ess,bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_statutory_filing,bpro_lms,bpro_pms \
   --without-demo=all --stop-after-init
 docker compose restart odoo
 ```
