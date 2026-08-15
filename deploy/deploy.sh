@@ -135,13 +135,19 @@ $COMPOSE up -d --force-recreate odoo
 # --- 5. Verify it's actually serving before declaring success ---------------
 # Poll rather than a single fixed sleep - a fresh restart right after
 # installing every module can reasonably take longer than a few seconds
-# to bind its HTTP port.
+# to bind its HTTP port. Checked via `docker exec ... curl localhost`
+# from inside the container, not by curling its bridge-network IP from
+# the host - the latter depends on host-to-bridge routing being
+# permitted, which isn't universal across Docker setups (confirmed the
+# hard way: works fine from another container on the same network, but
+# is unreachable from the host on Docker Desktop for Mac, where
+# containers run inside a VM). Checking from inside sidesteps that
+# entirely and works identically everywhere.
 ODOO_CONTAINER=$($COMPOSE ps -q odoo)
-HRMS_IP=$(docker inspect "$ODOO_CONTAINER" --format '{{.NetworkSettings.Networks.deploy_default.IPAddress}}')
 
 STATUS="000"
 for i in $(seq 1 30); do
-    STATUS=$(curl -s -m 5 -o /dev/null -w '%{http_code}' "http://$HRMS_IP:8069/web/login" 2>/dev/null || echo "000")
+    STATUS=$(docker exec "$ODOO_CONTAINER" curl -s -m 5 -o /dev/null -w '%{http_code}' http://localhost:8069/web/login 2>/dev/null || echo "000")
     [ "$STATUS" = "200" ] && break
     sleep 2
 done
