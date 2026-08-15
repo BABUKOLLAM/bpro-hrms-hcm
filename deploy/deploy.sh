@@ -76,8 +76,12 @@ log "Re-applying admin_passwd from .env into config/odoo.prod.conf..."
 sed "s|admin_passwd = .*|admin_passwd = $ODOO_ADMIN_PASSWD|" config/odoo.prod.conf > config/odoo.prod.conf.tmp
 mv config/odoo.prod.conf.tmp config/odoo.prod.conf
 
-if grep -q "CHANGE-ME" config/odoo.prod.conf; then
-    echo "[deploy] FATAL: config/odoo.prod.conf still contains a CHANGE-ME placeholder after the secret substitution. Aborting rather than going live insecure." >&2
+if grep -q "^admin_passwd = CHANGE-ME" config/odoo.prod.conf; then
+    # Anchored to the admin_passwd line specifically - the file also
+    # has an intentionally-still-placeholder, commented-out
+    # smtp_password (optional, configured via the UI instead), which
+    # a broader "CHANGE-ME anywhere" check would wrongly trip on.
+    echo "[deploy] FATAL: admin_passwd in config/odoo.prod.conf still contains a CHANGE-ME placeholder after the secret substitution. Aborting rather than going live insecure." >&2
     exit 1
 fi
 
