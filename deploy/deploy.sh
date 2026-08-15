@@ -24,6 +24,36 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
+# --- Phase 1: get the exact latest code, then re-exec a fresh copy of ------
+# this very script. This script lives INSIDE the repo it resets, so
+# `git reset --hard` can overwrite deploy.sh's own source file while
+# bash is still mid-way through interpreting it - bash does not
+# guarantee correct behavior when a running script's underlying file
+# changes underneath it (confirmed the hard way: a fixed guard message
+# further down kept printing its OLD text even after the reset had
+# genuinely landed the new commit on disk). Re-exec'ing after the reset
+# guarantees everything from here on runs from a freshly-read file.
+if [ "${DEPLOY_SH_REEXECED:-0}" != "1" ]; then
+    echo "[deploy $(date '+%Y-%m-%d %H:%M:%S')] Starting deploy in $REPO_DIR"
+    echo "[deploy $(date '+%Y-%m-%d %H:%M:%S')] Fetching latest code..."
+    git fetch origin
+    BEFORE_SHA="$(git rev-parse HEAD)"
+    git reset --hard origin/main
+    AFTER_SHA="$(git rev-parse HEAD)"
+    echo "[deploy $(date '+%Y-%m-%d %H:%M:%S')] HEAD: $BEFORE_SHA -> $AFTER_SHA"
+
+    if [ ! -d "$REPO_DIR/addons/bpro_employment_type" ]; then
+        echo "[deploy] FATAL: addons/bpro_employment_type missing after reset - the checkout is still wrong. Aborting." >&2
+        exit 1
+    fi
+
+    export DEPLOY_SH_REEXECED=1
+    export DEPLOY_SH_AFTER_SHA="$AFTER_SHA"
+    exec "$REPO_DIR/deploy/deploy.sh" "$@"
+fi
+
+# --- Everything below only ever runs from the freshly re-exec'd copy ------
+
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.shared-caddy.yml"
 
 # Every module this suite ships, minus bpro_demo_data (evaluation-only,
@@ -31,24 +61,6 @@ COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml -f dock
 MODULES="bpro_approval,bpro_attendance,bpro_base,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing"
 
 log() { echo "[deploy $(date '+%Y-%m-%d %H:%M:%S')] $*"; }
-
-log "Starting deploy in $REPO_DIR"
-
-# --- 1. Get the exact latest code, verifiably -----------------------------
-# A plain `git pull` can silently no-op if something upstream is wrong
-# (this exact repo did, for weeks). Reset hard to the real remote tip
-# instead, so success/failure is unambiguous.
-log "Fetching latest code..."
-git fetch origin
-BEFORE_SHA="$(git rev-parse HEAD)"
-git reset --hard origin/main
-AFTER_SHA="$(git rev-parse HEAD)"
-log "HEAD: $BEFORE_SHA -> $AFTER_SHA"
-
-if [ ! -d "addons/bpro_employment_type" ]; then
-    echo "[deploy] FATAL: addons/bpro_employment_type missing after reset - the checkout is still wrong. Aborting." >&2
-    exit 1
-fi
 
 # --- 2. Re-apply the real secret (never stored in git) ---------------------
 if [ ! -f "$REPO_DIR/.env" ]; then
@@ -120,4 +132,4 @@ if [ "$STATUS" != "200" ]; then
     exit 1
 fi
 
-log "SUCCESS - deployed $AFTER_SHA, /web/login returned 200."
+log "SUCCESS - deployed ${DEPLOY_SH_AFTER_SHA:-unknown}, /web/login returned 200."
