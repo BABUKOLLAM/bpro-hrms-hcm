@@ -100,7 +100,11 @@ $COMPOSE restart odoo
 sleep 5
 
 # --- 5. Verify it's actually serving before declaring success ---------------
-HRMS_IP=$(docker inspect bpro-hrms-hcm-odoo-1 --format '{{.NetworkSettings.Networks.deploy_default.IPAddress}}')
+# Derived from the running container, not a hardcoded name - the
+# compose project name (and so the container name) follows whatever
+# directory this repo happens to be checked out into.
+ODOO_CONTAINER=$($COMPOSE ps -q odoo)
+HRMS_IP=$(docker inspect "$ODOO_CONTAINER" --format '{{.NetworkSettings.Networks.deploy_default.IPAddress}}')
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' "http://$HRMS_IP:8069/web/login" || echo "000")
 
 if [ "$STATUS" != "200" ]; then
