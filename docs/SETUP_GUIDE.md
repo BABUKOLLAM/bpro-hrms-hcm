@@ -122,6 +122,38 @@ Caddy needs ports 80 and 443 reachable from the internet (80 is used
 for the one-time ACME certificate challenge, then everything redirects
 to 443). No manual certificate renewal is needed — Caddy handles it.
 
+### Redeploying after the first install: use `deploy/deploy.sh`
+
+Every step below this point (co-hosting, first install) is done once.
+After that, use `deploy/deploy.sh` for every subsequent deploy instead
+of repeating these commands by hand. It exists because of a real
+incident: a hand-typed deploy sequence left this exact repo's VPS
+checkout frozen at its original clone for weeks, with `git pull`
+silently never actually taking effect and nobody noticing — several
+shipped fixes simply never reached the live site. The script instead:
+resets to the exact latest commit (verifiable, not a hope), re-injects
+the real `admin_passwd` from a gitignored `.env` file so a reset can
+never again revert it to the public placeholder, installs/upgrades
+every module, restarts, and refuses to report success unless
+`/web/login` actually returns `200` afterward.
+
+One-time setup, on the server, before the first run:
+
+```bash
+echo "ODOO_ADMIN_PASSWD=$(openssl rand -base64 24)" > /root/bpro-hrms-hcm/.env
+chmod 600 /root/bpro-hrms-hcm/.env
+```
+
+Every deploy after that is just:
+
+```bash
+/root/bpro-hrms-hcm/deploy/deploy.sh
+```
+
+If it's co-hosted with another Caddy instance (see below), the script
+already accounts for that — it never starts this stack's own `caddy`
+service, matching the manual sequence documented next.
+
 ### Co-hosting on a server that already runs a Caddy instance
 
 Only one process can bind ports 80/443 on a given server, so if this
