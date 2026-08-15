@@ -70,7 +70,11 @@ if [ -z "${ODOO_ADMIN_PASSWD:-}" ]; then
 fi
 
 log "Re-applying admin_passwd from .env into config/odoo.prod.conf..."
-sed -i "s|admin_passwd = .*|admin_passwd = $ODOO_ADMIN_PASSWD|" config/odoo.prod.conf
+# Avoids `sed -i` on purpose - its in-place syntax differs between BSD
+# sed (macOS) and GNU sed (the Ubuntu VPS this actually runs on), and
+# write-to-temp-then-move works identically on both.
+sed "s|admin_passwd = .*|admin_passwd = $ODOO_ADMIN_PASSWD|" config/odoo.prod.conf > config/odoo.prod.conf.tmp
+mv config/odoo.prod.conf.tmp config/odoo.prod.conf
 
 if grep -q "CHANGE-ME" config/odoo.prod.conf; then
     echo "[deploy] FATAL: config/odoo.prod.conf still contains a CHANGE-ME placeholder after the secret substitution. Aborting rather than going live insecure." >&2
