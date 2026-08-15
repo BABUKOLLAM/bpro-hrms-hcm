@@ -97,9 +97,17 @@ if grep -q "^admin_passwd = CHANGE-ME" config/odoo.prod.conf; then
     exit 1
 fi
 
-# --- 3. Bring up db + odoo (no caddy - this VPS shares one with another project) ---
-log "Starting db + odoo containers..."
-$COMPOSE up -d db odoo
+# --- 3. Bring up Postgres only, not odoo yet ------------------------------
+# Deliberately NOT starting the persistent odoo process here too. On a
+# brand-new database, the persistent process's own boot sequence races
+# the explicit install command below to CREATE DATABASE bpro_prod -
+# confirmed directly: the exact same install command fails with
+# "duplicate key value violates ... pg_database_datname_index" when the
+# persistent container is already up, and succeeds cleanly when it
+# isn't. Initialize the database first, only then start the process
+# that serves it.
+log "Starting db..."
+$COMPOSE up -d db
 
 log "Waiting for Postgres to be healthy..."
 for i in $(seq 1 30); do
@@ -115,7 +123,8 @@ $COMPOSE run --rm --no-deps odoo \
     -i "$MODULES" -u "$MODULES" \
     --without-demo=all --stop-after-init
 
-log "Restarting the live odoo process..."
+log "Starting/restarting the live odoo process..."
+$COMPOSE up -d odoo
 $COMPOSE restart odoo
 sleep 5
 
