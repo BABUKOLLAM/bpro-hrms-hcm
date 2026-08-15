@@ -124,20 +124,30 @@ $COMPOSE run --rm --no-deps odoo \
     --without-demo=all --stop-after-init
 
 log "Starting/restarting the live odoo process..."
-$COMPOSE up -d odoo
-$COMPOSE restart odoo
-sleep 5
+# A single atomic recreate, not `up -d` followed by `restart` - doing
+# both back-to-back interrupted odoo mid-boot (confirmed the hard way:
+# the container stayed "Up" but its logs never got past font-cache
+# warnings, no "modules loaded" or "HTTP service running" line ever
+# appeared, and /web/login hung rather than just refusing - restart
+# was firing while the first start was still mid-initialization).
+$COMPOSE up -d --force-recreate odoo
 
 # --- 5. Verify it's actually serving before declaring success ---------------
-# Derived from the running container, not a hardcoded name - the
-# compose project name (and so the container name) follows whatever
-# directory this repo happens to be checked out into.
+# Poll rather than a single fixed sleep - a fresh restart right after
+# installing every module can reasonably take longer than a few seconds
+# to bind its HTTP port.
 ODOO_CONTAINER=$($COMPOSE ps -q odoo)
 HRMS_IP=$(docker inspect "$ODOO_CONTAINER" --format '{{.NetworkSettings.Networks.deploy_default.IPAddress}}')
-STATUS=$(curl -s -o /dev/null -w '%{http_code}' "http://$HRMS_IP:8069/web/login" || echo "000")
+
+STATUS="000"
+for i in $(seq 1 30); do
+    STATUS=$(curl -s -m 5 -o /dev/null -w '%{http_code}' "http://$HRMS_IP:8069/web/login" 2>/dev/null || echo "000")
+    [ "$STATUS" = "200" ] && break
+    sleep 2
+done
 
 if [ "$STATUS" != "200" ]; then
-    echo "[deploy] FAILED: /web/login returned HTTP $STATUS after restart. Check: docker compose logs odoo" >&2
+    echo "[deploy] FAILED: /web/login returned HTTP $STATUS after waiting up to 60s. Check: docker compose logs odoo" >&2
     exit 1
 fi
 
