@@ -130,7 +130,14 @@ log "Starting/restarting the live odoo process..."
 # warnings, no "modules loaded" or "HTTP service running" line ever
 # appeared, and /web/login hung rather than just refusing - restart
 # was firing while the first start was still mid-initialization).
-$COMPOSE up -d --force-recreate odoo
+# --remove-orphans - Compose sometimes decides a currently-running
+# container doesn't match "its" current service config (its internal
+# config-hash bookkeeping) and refuses to recreate in place, instead
+# erroring "container name already in use" - confirmed live: it blocked
+# a deploy outright and needed a manual --remove-orphans run to recover.
+# This flag makes that class of failure impossible instead of hoping it
+# doesn't recur.
+$COMPOSE up -d --force-recreate --remove-orphans odoo
 
 # --- 5. Verify it's actually serving before declaring success ---------------
 # Poll rather than a single fixed sleep - a fresh restart right after
