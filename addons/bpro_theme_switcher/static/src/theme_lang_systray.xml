@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="bpro_theme_switcher.ThemeLangSystray">
+        <div class="bpro-theme-lang-systray d-flex align-items-center">
+            <Dropdown>
+                <button class="btn bpro-theme-lang-btn" title="Language and theme">
+                    <i class="fa fa-globe"/>
+                </button>
+                <t t-set-slot="content">
+                    <div class="bpro-theme-lang-section-label">Theme</div>
+                    <t t-foreach="themeOptions" t-as="opt" t-key="opt.value">
+                        <DropdownItem onSelected="() => this.onSelectTheme(opt.value)">
+                            <div class="d-flex align-items-center justify-content-between w-100">
+                                <span>
+                                    <i t-attf-class="fa {{opt.icon}} me-2"/>
+                                    <t t-esc="opt.label"/>
+                                </span>
+                                <i t-if="state.themePref === opt.value" class="fa fa-check text-primary"/>
+                            </div>
+                        </DropdownItem>
+                    </t>
+                    <div role="separator" class="dropdown-divider"/>
+                    <div class="bpro-theme-lang-section-label">Language</div>
+                    <t t-foreach="state.languages" t-as="lang" t-key="lang.code">
+                        <DropdownItem onSelected="() => this.onSelectLang(lang.code)">
+                            <div class="d-flex align-items-center justify-content-between w-100">
+                                <span t-esc="lang.name"/>
+                                <i t-if="state.currentLang === lang.code" class="fa fa-check text-primary"/>
+                            </div>
+                        </DropdownItem>
+                    </t>
+                </t>
+            </Dropdown>
+        </div>
+    </t>
+
+</templates>

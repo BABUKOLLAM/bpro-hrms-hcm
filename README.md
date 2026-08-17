@@ -31,6 +31,7 @@ Contact: [care@bprohrms.com](mailto:care@bprohrms.com).
 | `bpro_lms` | Learning management with auto-enrolled induction |
 | `bpro_pms` | Goals, review cycles, appraisals |
 | `bpro_hrms_portal` | Branded public landing page and login experience |
+| `bpro_theme_switcher` | Always-visible backend systray control for language and day/night/auto theme, independent of the OS-level dark mode |
 | `bpro_hcm_dashboard` | HCM-only executive dashboard — payroll, recruitment, attendance, exit and leave-liability KPIs at a glance |
 | `bpro_employment_type` | Classifies each contract as Permanent, Fixed Term Contract, Trainee/Apprentice, Daily Wage, or Contract Labour — with real payroll differences, not just a label (Daily Wage computes from actual attendance days, not CTC) |
 | `bpro_approval` | Shared threshold-approval policy primitive used by several modules above |
@@ -65,7 +66,7 @@ Requires Docker.
 ```bash
 docker compose up -d
 docker compose exec odoo odoo -c /etc/odoo/odoo.conf -d bpro_hcm \
-  -i bpro_hrms_portal,bpro_hcm_dashboard,bpro_leave,bpro_exit,bpro_ess,bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_statutory_filing,bpro_lms,bpro_pms,bpro_employment_type \
+  -i bpro_hrms_portal,bpro_theme_switcher,bpro_hcm_dashboard,bpro_leave,bpro_exit,bpro_ess,bpro_probation,bpro_hr_letters,bpro_overtime,bpro_shifts,bpro_statutory_filing,bpro_lms,bpro_pms,bpro_employment_type \
   --without-demo=all --stop-after-init
 docker compose restart odoo
 ```
@@ -107,16 +108,19 @@ Nothing runs automatically — schedule `backup_db.sh` via cron. See
 
 ## Test suites
 
-Every module except `bpro_hrms_portal` carries its own `tests/` (Odoo
-`TransactionCase`) — 171 tests in total. This runs automatically on
-every push via [GitHub Actions](.github/workflows/tests.yml); to run
-it yourself against a throwaway database:
+Every module carries its own `tests/` (Odoo `TransactionCase`) — 173
+tests in total — except `bpro_hrms_portal` and `bpro_theme_switcher`,
+which are primarily JS/UI (Owl components, systray behavior) that a
+server-side TransactionCase can't exercise anyway; both were verified
+by driving a real browser against a local instance instead. This runs
+automatically on every push via [GitHub Actions](.github/workflows/tests.yml);
+to run it yourself against a throwaway database:
 
 ```bash
 docker compose run --rm --no-deps odoo odoo -c /etc/odoo/odoo.conf -d hcm_test \
   --test-enable \
   --test-tags /bpro_approval,/bpro_attendance,/bpro_base,/bpro_employment_type,/bpro_ess,/bpro_exit,/bpro_hcm_dashboard,/bpro_hr,/bpro_hr_letters,/bpro_leave,/bpro_lms,/bpro_overtime,/bpro_payroll,/bpro_pms,/bpro_probation,/bpro_recruitment,/bpro_shifts,/bpro_statutory_filing \
-  -i bpro_approval,bpro_attendance,bpro_base,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing \
+  -i bpro_approval,bpro_attendance,bpro_base,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing,bpro_theme_switcher \
   --stop-after-init --without-demo=all
 ```
 

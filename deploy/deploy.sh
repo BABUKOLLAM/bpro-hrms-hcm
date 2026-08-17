@@ -58,7 +58,7 @@ COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml -f dock
 
 # Every module this suite ships, minus bpro_demo_data (evaluation-only,
 # must never run in production - see its own manifest for why).
-MODULES="bpro_approval,bpro_attendance,bpro_base,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing"
+MODULES="bpro_approval,bpro_attendance,bpro_base,bpro_employment_type,bpro_ess,bpro_exit,bpro_hcm_dashboard,bpro_hr,bpro_hr_letters,bpro_hrms_portal,bpro_leave,bpro_lms,bpro_overtime,bpro_payroll,bpro_pms,bpro_probation,bpro_recruitment,bpro_shifts,bpro_statutory_filing,bpro_theme_switcher"
 
 log() { echo "[deploy $(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 

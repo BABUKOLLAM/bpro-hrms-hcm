@@ -1,0 +1,21 @@
+.bpro-theme-lang-btn {
+    padding: 0 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    color: inherit;
+    border: none;
+    background: transparent;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+.bpro-theme-lang-section-label {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    opacity: 0.6;
+}
