@@ -101,8 +101,8 @@
         <field name="context">{}</field>
     </record>
 
-    <menuitem id="menu_bpro_hcm_dashboard_root" name="HCM Dashboard" sequence="1"/>
-    <menuitem id="menu_bpro_hcm_dashboard" name="HCM Dashboard"
+    <menuitem id="menu_bpro_hcm_dashboard_root" name="Human Resources" sequence="1"/>
+    <menuitem id="menu_bpro_hcm_dashboard" name="Dashboard"
               parent="menu_bpro_hcm_dashboard_root"
               action="action_bpro_hcm_dashboard" sequence="1"/>
 

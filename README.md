@@ -32,7 +32,7 @@ Contact: [care@bprohrms.com](mailto:care@bprohrms.com).
 | `bpro_pms` | Goals, review cycles, appraisals |
 | `bpro_hrms_portal` | Branded public landing page and login experience |
 | `bpro_theme_switcher` | Always-visible backend systray control for language and day/night/auto theme, independent of the OS-level dark mode |
-| `bpro_hcm_dashboard` | HCM-only executive dashboard — payroll, recruitment, attendance, exit and leave-liability KPIs at a glance |
+| `bpro_hcm_dashboard` | The "Human Resources" app itself — an executive KPI dashboard (payroll, recruitment, attendance, exit, leave-liability), plus the umbrella app switcher entry that consolidates Recruitment, Employees, Attendances, Time Off, Payroll, Expenses and My HR into major sections of one app instead of seven separate icons |
 | `bpro_employment_type` | Classifies each contract as Permanent, Fixed Term Contract, Trainee/Apprentice, Daily Wage, or Contract Labour — with real payroll differences, not just a label (Daily Wage computes from actual attendance days, not CTC) |
 | `bpro_approval` | Shared threshold-approval policy primitive used by several modules above |
 | `bpro_demo_data` | *Evaluation only, never install in production* — populates a small sample company (one employee hired through the real recruitment workflow, four more spanning every employment category, a computed payslip, attendance, a leave allocation) so a fresh install isn't empty. Only runs when demo data is enabled; every install command in this README/the setup guide/CI passes `--without-demo=all`, which skips it automatically |
