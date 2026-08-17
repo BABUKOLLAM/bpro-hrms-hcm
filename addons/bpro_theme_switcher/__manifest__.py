@@ -7,14 +7,18 @@ every backend screen) with two controls:
 
 * Language - lists every active language on this database, switches
   the current user's language and reloads.
-* Theme - Day / Night / Auto. Day and Night set Odoo's own native
-  `color_scheme` cookie, which the webclient already uses server-side
-  to choose between its light and dark CSS bundles (confirmed by
-  reading web/views/webclient_templates.xml directly rather than
-  assuming) - so every screen, native and custom, gets proper dark
-  styling for free. Auto has no native Odoo equivalent: it reads the
-  OS's prefers-color-scheme on load and keeps the cookie in sync,
-  including live if the OS preference changes without a reload.
+* Theme - Day / Night / Auto. Odoo 18 Community has no built-in dark
+  mode covering the app shell (confirmed directly: even with its own
+  color_scheme cookie and dark asset bundle active, computed styles
+  showed the body background staying light - Community's dark SCSS
+  only covers a few widgets). Night instead applies a curated dark
+  stylesheet over the backend's main surfaces (forms, lists, kanban,
+  control panel, dialogs, dropdowns, chatter) via a plain DOM
+  attribute, not a cookie/bundle swap - so switching is instant, no
+  reload. Auto follows the device's own light/dark preference live.
+  The choice persists per browser (localStorage) and applies before
+  first paint - no flash. Same approach as the sibling mepcrm.in
+  product's bpro_ui_prefs module, ported here.
 """,
     "version": "18.0.1.0.0",
     "category": "Hidden",
@@ -28,6 +32,7 @@ every backend screen) with two controls:
             "bpro_theme_switcher/static/src/theme_lang_systray.js",
             "bpro_theme_switcher/static/src/theme_lang_systray.xml",
             "bpro_theme_switcher/static/src/theme_lang_systray.scss",
+            "bpro_theme_switcher/static/src/dark_theme.scss",
         ],
     },
     "installable": True,

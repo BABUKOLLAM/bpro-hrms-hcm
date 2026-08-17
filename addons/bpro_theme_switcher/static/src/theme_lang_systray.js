@@ -7,8 +7,8 @@ import { user } from "@web/core/user";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 
-import { Component, onMounted, onWillStart, useState } from "@odoo/owl";
-import { getThemePref, setThemePref, reconcileAutoTheme } from "./theme_utils";
+import { Component, onWillStart, useState } from "@odoo/owl";
+import { getThemePref, setThemePref } from "./theme_utils";
 
 const THEME_OPTIONS = [
     { value: "light", label: _t("Day"), icon: "fa-sun-o" },
@@ -35,16 +35,6 @@ export class ThemeLangSystray extends Component {
                 ["code", "name"]
             );
         });
-        // Deferred with setTimeout, and only after this component (a
-        // systray item, mounted as part of the webclient's own tree)
-        // has actually mounted - calling this at module top-level
-        // instead broke the webclient outright: a reload triggered
-        // mid-mount, before Owl's App.mount() had even resolved,
-        // threw "Cannot mount component: the target is not a valid
-        // DOM element" and took the whole app down with it, not just
-        // this component. Confirmed by reproducing it in a real
-        // browser before shipping this fix.
-        onMounted(() => setTimeout(() => reconcileAutoTheme(), 0));
     }
 
     get themeOptions() {
