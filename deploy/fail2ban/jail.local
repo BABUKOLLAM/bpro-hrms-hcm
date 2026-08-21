@@ -10,6 +10,15 @@
 enabled  = true
 filter   = odoo-auth
 logpath  = /path/to/bpro-hrms-hcm/logs/odoo/odoo.log
+# Ubuntu's default backend = auto prefers the systemd journal on a
+# systemd host, even when logpath is explicitly set - confirmed the
+# hard way: the jail came up "enabled" with no errors, but its status
+# showed "Journal matches:" instead of "File list:", meaning it was
+# silently watching the (empty, irrelevant) journal instead of this
+# file. Odoo runs in a Docker container, so its failed-login lines
+# only ever reach the bind-mounted logpath above, never the host
+# journal - without this line the jail can never ban anyone.
+backend  = polling
 maxretry = 5
 findtime = 10m
 bantime  = 1h
