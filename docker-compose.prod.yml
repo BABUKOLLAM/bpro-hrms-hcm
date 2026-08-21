@@ -3,8 +3,21 @@
 #
 # Adds a Caddy reverse proxy (automatic HTTPS) and stops publishing
 # Odoo's ports directly to the host - only Caddy is internet-facing.
+#
+# restart: unless-stopped on db/odoo (added after a live incident: the
+# db container came back up on its own after some disruption on the
+# host, odoo didn't, and nothing noticed until a user reported the
+# site down) - Docker's default with no restart policy at all is to
+# leave a stopped container stopped, whether it stopped from a crash,
+# an interrupted deploy, or the host rebooting. "unless-stopped" means
+# Docker itself brings both back automatically in all of those cases,
+# while still respecting a deliberate `docker compose stop`.
 services:
+  db:
+    restart: unless-stopped
+
   odoo:
+    restart: unless-stopped
     ports: !reset []
     command: odoo -c /etc/odoo/odoo.prod.conf
     volumes:
