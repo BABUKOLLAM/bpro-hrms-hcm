@@ -20,6 +20,12 @@ services:
     restart: unless-stopped
     ports: !reset []
     command: odoo -c /etc/odoo/odoo.prod.conf
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8069/web/health', timeout=8).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     volumes:
       - odoo-data:/var/lib/odoo
       - ./config:/etc/odoo
